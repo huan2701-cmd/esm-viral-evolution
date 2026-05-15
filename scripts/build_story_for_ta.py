@@ -143,52 +143,62 @@ SECTIONS: list[dict] = [
     },
     {
         "n": 6,
-        "zh_title": "Embedding 被神化了？PCA 直接降维：乱成一团",
-        "en_title": "PCA on raw embeddings: nothing",
+        "zh_title": "Embedding 被神化了？PCA 直接降维：真的乱成一团",
+        "en_title": "PCA on raw embeddings: literally a mess",
         "zh": (
-            "现在的风气是把 embedding 当万能钥匙。我就直接 PCA 给它降到 2D —— <br>"
-            "结果 PC1 / PC2 几乎啥都没有，根本不是肉眼可见的 cluster。<br><br>"
+            "现在的风气是把 embedding 当万能钥匙。我直接拿 ESM-2 的原始 embedding "
+            "做 PCA 降到 2D —— 结果如下图，<b>PC1 / PC2 上各种 lineage 完全糊在一起</b>，"
+            "根本没有肉眼可见的 cluster 结构。<br><br>"
             "换句话说，<b>「最大方差方向」并不是「最有信息的方向」</b>。"
-            "这个发现后面会被反复验证。"
+            "这是我后面所有方法的出发点。"
         ),
         "en": (
-            "Top-2 PCA components on raw ESM-2 embeddings show no clean cluster structure. "
-            "Maximum-variance directions ≠ most informative directions."
+            "Raw PCA on ESM-2 embeddings: lineages are visually entangled in PC1/PC2. "
+            "Maximum-variance directions are NOT the most informative directions."
         ),
-        "img": None,
+        "img": ("fig_raw_pca_messy.png", "Raw ESM-2 PCA 2D — no visible clusters"),
     },
     {
         "n": 7,
         "zh_title": "「作弊」一下：用 LDA 看簇藏在哪里",
         "en_title": "Cheating with LDA to locate the signal",
         "zh": (
-            "既然肉眼找不到，我就「作弊」 —— 用 <b>LDA</b>（监督的判别分析）"
-            "直接问：簇在哪？<br><br>"
-            "结论很有意思：从 PCA 角度看，可分簇信息<b>不在 PC1/PC2，"
-            "而是大概落在 PC4 到 PC8</b> 这个区间。"
-            "并且这个信号<b>从 Layer 1 就出现了</b>，不是深层涌现，"
-            "而是预训练表征里本就埋着的。"
+            "肉眼看不见，那我就作弊 —— 用 <b>LDA</b>（监督的线性判别分析）"
+            "直接问：可分簇信息在哪个方向上？<br><br>"
+            "下面这张图是结论：左边 PCA 完全糊住，右边 LDA 直接<b>把各 lineage 分开</b>。"
+            "进一步看 PCA 各个分量，真正承载信号的<b>不是 PC1/PC2，而是大概 PC4–PC8</b>。"
+            "并且 layer-wise LDA 显示这个信号<b>从 Layer 1 就在了</b> —— "
+            "不是深层涌现，而是预训练表征里本就埋着。"
         ),
         "en": (
-            "LDA reveals that the discriminative signal lives between PC4–PC8, "
-            "not PC1–PC2. Layer-1 LDA already hits ~95% accuracy — this is not "
-            "deep emergence, it is pretraining-encoded geometry."
+            "LDA finds the discriminative axes that PCA misses. Signal lives around "
+            "PC4–PC8, and Layer-1 LDA already reaches ~95% accuracy — this geometry "
+            "is pretraining-encoded, not deep emergence."
         ),
-        "img": ("fig_layerwise_lda.png", "Layer-wise LDA probe accuracy"),
+        "img": ("fig_pca_vs_lda.png", "PCA (messy) vs LDA (clean) on the same embeddings"),
+        "img2": ("fig_layerwise_lda.png", "Layer-wise LDA probe accuracy"),
     },
     {
         "n": 8,
-        "zh_title": "随手记的小疑问：一定要标签才能做这些吗？",
-        "en_title": "Side note: do we really need labels?",
+        "zh_title": "随手记的小疑问：大家用 ESM-2 都在干什么？",
+        "en_title": "Side note: what is everyone doing with ESM-2 anyway?",
         "zh": (
-            "我记到随身的纸条上：<i>「一定要标签他才能做出这么好的东西吗？"
-            "前人做 ESM-2 都是有监督的，我能不能不用标签也跑出来？」</i><br><br>"
-            "这是<b>支线疑问</b>，不是主线 —— 主线是先把无监督方法跑通。"
-            "（后面会回来跨物种线上做有监督，这就是另一个故事了。）"
+            "做到这里我在纸条上记了一段：<br><br>"
+            "<i>「目前用 ESM-2 的工作，要么有监督要么无监督，效果参差。"
+            "印象里有德国一组的报告说他们试出来效果很差。"
+            "本质上大家都还是在<b>找一个把高维表征降到可视的方法</b>，"
+            "而且每一步都需要<b>人为主观地引导</b>（选哪一层、选哪些维度、用什么距离）。"
+            "那能不能让模型自己把分布说清楚？」</i><br><br>"
+            "这是当时的<b>支线疑问</b>，不是主线 —— 主线先把无监督方法跑通。"
+            "（这个支线后来直接催生了我那套层级有监督设计，见 §10。）"
         ),
         "en": (
-            "Note to self: most prior ESM-2 works use supervision. Can we get away "
-            "without labels? Filed as a side thread; the main line is unsupervised first."
+            "Side note on the literature: ESM-2 has been used both supervised and "
+            "unsupervised with mixed results (one German group reportedly reported poor "
+            "performance). Most approaches still rely on human-guided dimensionality "
+            "reduction — pick the layer, pick the dimensions, pick the metric. "
+            "Could the model express its own structure? This side thread later became "
+            "the hierarchical supervised design in §10."
         ),
         "img": None,
     },
@@ -222,22 +232,36 @@ SECTIONS: list[dict] = [
         "en_title": "Back to the side thread: hierarchical classification",
         "zh": (
             "无监督跑完后，我回到那张纸条上的疑问。<br><br>"
-            "高中学过<b>「界门纲目科属种」</b> —— 我就拿这个层级跑模型："
-            "Kingdom → Phylum → Class → Order，看看能不能在<b>大尺度上</b>"
-            "粗暴地把病毒分准。这一步只要在<b>大的层面</b>预测准，"
-            "就算我迈出了一小步。<br><br>"
-            "为此我设计了几处创新：<br>"
-            "&nbsp;&nbsp;① <b>OutputInitializer</b>：2 层 Transformer 把基因组里所有 domain 聚成一个上下文 g<br>"
-            "&nbsp;&nbsp;② <b>串联 Cascade Decoder</b>：上一层的预测作为下一层的 prefix<br>"
-            "&nbsp;&nbsp;③ <b>Affiliate Loss</b>：用 ICTV 父-子矩阵 M 强制层级一致<br><br>"
-            "结果：Kingdom 99.7%，Order 90.6%，层级一致性 94.9%（从基线 0.02% 起飞）。"
+            "高中生物里都学过<b>「界门纲目科属种」</b> —— 这就是生物分类的层级树。"
+            "我把这套层级搬到病毒上，做 Kingdom → Phylum → Class → Order 四层预测。"
+            "目标很朴素：哪怕只能在<b>大的尺度</b>上分准，也算迈出了一小步。<br><br>"
+            "<b>三个我自己挺得意的设计（用大一也能懂的说法）：</b><br><br>"
+            "<b>① OutputInitializer ——「先粗读全文再答题」</b><br>"
+            "类比：你做阅读理解，不会上来就看第一段答题，会<b>先把全文扫一遍</b>有个整体印象，"
+            "再回头答细节。模型也一样：一个病毒基因组里有十几个 Pfam domain（≈ 十几个段落），"
+            "我先用一个 2 层 Transformer 把这十几段「读一遍、做个 320 维的全局摘要 g」，"
+            "再让后面的解码器在<b>带着这个摘要的前提下</b>去判断分类。<br><br>"
+            "<b>② 串联 Cascade Decoder ——「先选大类，再选小类」</b><br>"
+            "类比：考试做单选题，与其一次性 41 选 1，不如先决定<b>「这是动物题还是植物题」</b>，"
+            "再缩小到具体哪一种。我让 4 个解码器串成一列：第一个出 Kingdom（2 选 1），"
+            "把它的预测当成<b>提示</b>塞给下一个解码器去出 Phylum（9 选 1），"
+            "依此类推一直到 Order（41 选 1）。每一步的选择空间都被上一步极大地压缩了。<br><br>"
+            "<b>③ Affiliate Loss ——「父子不一致就罚」</b><br>"
+            "类比：如果你考试写「这是哺乳动物 → 但它是鸟纲」，老师肯定要扣分，"
+            "因为「哺乳动物」下面根本没有「鸟纲」这个分支。我把整个 ICTV 父-子映射矩阵 M 喂给损失函数，"
+            "<b>只要模型预测的父子组合在生物学上不可能存在，就直接惩罚</b>。"
+            "结果是层级一致性从原本随机的 0.02% 直接飙到 <b>94.9%</b>（涨了 4 个数量级）。<br><br>"
+            "最终成绩：Kingdom 99.7%，Phylum 92.9%，Class 92.6%，Order 90.6%。"
         ),
         "en": (
-            "Returned to the supervised side thread: K→P→C→O hierarchy. "
-            "Three innovations: OutputInitializer (2-layer Transformer over domains), "
-            "tandem cascade decoder (parent prediction conditions child), "
-            "affiliate loss (parent-child consistency via ICTV affinity matrix M). "
-            "99.7% Kingdom, 90.6% Order, 94.9% hierarchical consistency."
+            "Three innovations explained at freshman level: "
+            "(1) OutputInitializer — like skimming the whole article before answering: "
+            "a 2-layer Transformer summarises all Pfam domains into a 320-d genome context g. "
+            "(2) Cascade Decoder — like multi-choice exams where you first pick the big "
+            "category then narrow down: 4 decoders chained K→P→C→O, each conditioned on "
+            "its parent's prediction. "
+            "(3) Affiliate Loss — penalises biologically impossible parent-child combinations "
+            "via the ICTV affinity matrix M, lifting hierarchical consistency from 0.02% to 94.9%."
         ),
         "img": ("fig_pipeline_supervised.png",
                  "Supervised three-stage pipeline"),
@@ -271,15 +295,16 @@ SECTIONS: list[dict] = [
         "en_title": "The final exam: hand-curated 5% test set",
         "zh": (
             "为了避免「跑分好看但其实在背书」，"
-            "我把最后的 5% 测试集<b>手动出题</b> —— 涵盖了所有 41 个 Order，"
-            "并且<b>故意加入了训练集里没见过的几种病毒</b>，专门看泛化。<br><br>"
+            "我把最后的 5% 测试集<b>手动出题</b>：涵盖了所有 41 个 Order，"
+            "并且<b>有意加入了若干训练集里没见过、但已经被公共卫生界确认为高风险的病毒</b>"
+            "（具体名单见 §References / 数据来源），重点测<b>泛化</b>而不是死记硬背。<br><br>"
             "在这种条件下还能 Order 90.6% / Top-5 98.9%，"
-            "说明模型不是在记忆，而是真的捕到了几何。"
+            "说明模型捕到的是几何，而不是把训练样本背下来。"
         ),
         "en": (
             "Final 5% test set is hand-curated, covers all 41 Orders, and intentionally "
-            "includes families absent from training — to stress generalization rather than "
-            "memorization. Order accuracy still 90.6% / Top-5 98.9%."
+            "includes several high-risk pathogens not present in training (see References) — "
+            "designed to stress generalization. Order accuracy 90.6% / Top-5 98.9%."
         ),
         "img": ("fig_tsne_ranks.png", "Per-rank t-SNE of decoder features"),
     },
@@ -289,19 +314,73 @@ SECTIONS: list[dict] = [
         "en_title": "The story in one sentence",
         "zh": (
             "<b>「同一个冻结的蛋白语言模型，"
-            "既能粗粒度认出新病毒是什么科目，"
+            "既能粗粒度认出新病毒落在哪个科目，"
             "也能细粒度看出哪条 SARS-CoV-2 序列是重组体 —— "
             "全程不需要为任何任务专门训练 backbone。」</b><br><br>"
-            "如果回到 2019 年武汉，这套流程可以在几分钟内给出："
-            "（1）这病毒最像 Coronaviridae，"
-            "（2）它的 Spike 跟 SARS-CoV-1 共享了哪些关键残基，"
-            "（3）哪些已知抗原可能交叉。"
+            "我不会说这套流程能「救命」（这是临床问题，不是表征学习问题），"
+            "但它能<b>缩短「拿到序列 → 拿到可解读信息」的回路</b>："
+            "对一段新序列，能在几分钟里给出（1）最像哪一个已知病毒科属、"
+            "（2）哪些位点与已知 VOC 共享、（3）密度聚类是否标它为噪声"
+            "（提示可能的重组体）。<br><br>"
+            "这三件事过去都依赖人工 MSA + 专家审阅，可以是几天到几周的回路。"
         ),
         "en": (
-            "One frozen PLM — coarse-grained virus identification AND fine-grained "
-            "recombinant detection — without task-specific backbone training. "
-            "Replayed on Wuhan 2019, this pipeline would give taxonomic placement, "
-            "shared functional residues, and candidate cross-reactive antigens within minutes."
+            "One frozen PLM gives both coarse taxonomy and fine recombinant detection "
+            "without any task-specific training. I am not claiming clinical impact — "
+            "but the framework shortens the loop from 'received sequence' to "
+            "'interpretable evolutionary placement' from days to minutes."
+        ),
+        "img": None,
+    },
+    {
+        "n": 14,
+        "zh_title": "参考资料 / References & Data Sources",
+        "en_title": "References & data sources",
+        "zh": (
+            "<b>预训练模型</b><br>"
+            "&nbsp;&nbsp;• <b>ESM-2</b>: Lin et al., <i>Evolutionary-scale prediction of "
+            "atomic-level protein structure with a language model</i>, Science 379, 2023.<br>"
+            "&nbsp;&nbsp;• <b>ESM-1b</b>: Rives et al., <i>Biological structure and function "
+            "emerge from scaling unsupervised learning to 250M protein sequences</i>, "
+            "PNAS 118, 2021.<br>"
+            "&nbsp;&nbsp;• <b>EVO2</b>（提到过，未采用）: Nguyen et al., 2024.<br><br>"
+            "<b>方法与设计参考</b><br>"
+            "&nbsp;&nbsp;• <b>Numerical Taxonomy</b>: Deng et al., <i>Awareness of Evolutionary "
+            "Constraint Emerge from Numerical Taxonomy enabled by Bio-Language Model</i>, 2024. "
+            "(本工作 cascade decoder 的参考。)<br>"
+            "&nbsp;&nbsp;• <b>PASSION ESM pipeline</b>: virus project release, 2025. "
+            "(本工作四阶 ICTV 层级和训练数据的来源。)<br>"
+            "&nbsp;&nbsp;• <b>HDBSCAN</b>: McInnes & Healy, 2017.<br>"
+            "&nbsp;&nbsp;• <b>Integrated Gradients</b>: Sundararajan et al., ICML 2017.<br><br>"
+            "<b>数据来源（全部公开）</b><br>"
+            "&nbsp;&nbsp;• 跨物种分类：<b>ICTV VMR</b>（Virus Metadata Resource），"
+            "经 PASSION 流水线处理后的训练/验证/测试切分。<br>"
+            "&nbsp;&nbsp;• SARS-CoV-2 Spike 监测：<b>GISAID</b> + <b>GenBank</b>，"
+            "2020–2022，n=804，覆盖 Ancestral / Alpha / Beta / Delta / BA.1 / BA.2/5+。<br>"
+            "&nbsp;&nbsp;• 跨病毒验证：<b>RSV F</b> (n=410)、<b>Dengue Envelope domain III</b> (n=380)。<br>"
+            "&nbsp;&nbsp;• 结构验证：PDB <b>6VXX</b>（SARS-CoV-2 Spike）、<b>5WN9</b>（RSV F）、"
+            "<b>1OAN</b>（Dengue E）。<br><br>"
+            "<b>测试集中的高风险病毒（5% hand-curated 留出）</b><br>"
+            "&nbsp;&nbsp;<span style='color:#b94a48'>"
+            "⚠ 这部分请你<b>核对/补全具体的病毒列表</b>（我没在仓库里找到具体 manifest）。"
+            "推荐写成：例如 <i>Filoviridae</i> (Ebola, Marburg)、<i>Coronaviridae</i> "
+            "(SARS-CoV-1, MERS-CoV)、<i>Henipavirus</i> (Nipah) 等。"
+            "</span><br><br>"
+            "<b>本项目代码</b><br>"
+            "&nbsp;&nbsp;• 训练 + 分析: <a href='https://github.com/huan2701-cmd/esm-tax'>"
+            "huan2701-cmd/esm-tax</a><br>"
+            "&nbsp;&nbsp;• ICLR 报告 + 本 HTML: <a href='https://github.com/huan2701-cmd/esm-viral-evolution'>"
+            "huan2701-cmd/esm-viral-evolution</a><br><br>"
+            "<b>AI 协助声明</b>：代码骨架、可视化脚本、英文润色由 Claude (Anthropic) 协助；"
+            "实验设计、数据解释、科学结论均由作者本人完成。"
+        ),
+        "en": (
+            "Pretrained models: ESM-2 (Lin 2023), ESM-1b (Rives 2021), EVO2 (Nguyen 2024, "
+            "considered not used). Method references: Numerical Taxonomy (Deng 2024), "
+            "PASSION ESM pipeline (2025), HDBSCAN (McInnes 2017), Integrated Gradients "
+            "(Sundararajan 2017). Data: ICTV VMR (cross-species); GISAID+GenBank "
+            "SARS-CoV-2 Spike n=804; RSV F n=410; Dengue E III n=380; PDB 6VXX/5WN9/1OAN. "
+            "Code: huan2701-cmd/esm-tax and huan2701-cmd/esm-viral-evolution."
         ),
         "img": None,
     },
