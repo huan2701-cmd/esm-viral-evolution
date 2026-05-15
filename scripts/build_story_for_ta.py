@@ -1,7 +1,8 @@
-"""Build a bilingual (Chinese narrative + English captions) self-contained HTML
-story for the TA. Images are base64-embedded so the file is fully portable.
+"""Build TWO self-contained HTML versions of the story for the TA — one
+Chinese-only, one English-only. Images are base64-embedded so each file is
+fully portable.
 
-Output: ../story_for_TA.html
+Outputs: ../story_for_TA_zh.html  and  ../story_for_TA_en.html
 """
 from __future__ import annotations
 
@@ -10,7 +11,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 FIG_DIR = ROOT / "paper" / "iclr2026" / "figures"
-OUT = ROOT / "story_for_TA.html"
+OUT_ZH = ROOT / "story_for_TA_zh.html"
+OUT_EN = ROOT / "story_for_TA_en.html"
 
 
 def img(name: str, alt: str, width: str = "82%") -> str:
@@ -53,14 +55,21 @@ SECTIONS: list[dict] = [
             "<b>这种纯序列相似度聚出来的图，真的有参考性吗？</b><br><br>"
             "答案是没有。它既看不出哪个病毒「特别」，也回答不了任何生物学问题，"
             "只是把序列上长得像的东西堆在一起。下面这张就是典型的"
-            "alignment + PCA + K-means baseline —— 视觉上看着干净，"
-            "是因为 MSA 已经把序列硬掰进了一个欧氏空间，"
-            "对真正新出现的、高变异的病毒完全没用。"
+            "alignment + PCA + K-means baseline —— 视觉上看着挺干净，"
+            "但这种 pipeline 本身有<b>预设</b>：它假定不同序列在同一坐标位置上是「同源」的、"
+            "而且这些位置之间的距离可以直接相加；这套假设在高变异、含 indel、含重组的病毒"
+            "序列上经常不成立。<br><br>"
+            "更基本的一点是：<b>「序列空间」本身就不是一个朴素的欧氏空间</b>——"
+            "把序列硬投到 2D PCA 上，距离的几何意义是模糊的；"
+            "一张看起来干净的 cluster 图，并不意味着背后的度量真的对应了生物学。"
         ),
         "en": (
-            "Alignment-based clustering looks clean only because MSA forces sequences "
-            "into a Euclidean-compatible subspace. It cannot answer biological questions "
-            "and breaks on novel / highly divergent sequences."
+            "Alignment-based clustering looks clean, but the pipeline carries strong "
+            "assumptions: it treats positions across sequences as homologous and assumes "
+            "those positions' contributions to distance simply add up. Both assumptions "
+            "break for novel, highly divergent, or recombinant sequences. More fundamentally, "
+            "sequence space is not a naive Euclidean space — a clean-looking 2D cluster "
+            "plot does not imply the underlying metric is biologically meaningful."
         ),
         "img": ("fig_baseline_pca.png", "Alignment + PCA + K-means baseline"),
     },
@@ -149,12 +158,15 @@ SECTIONS: list[dict] = [
             "现在的风气是把 embedding 当万能钥匙。我直接拿 ESM-2 的原始 embedding "
             "做 PCA 降到 2D —— 结果如下图，<b>PC1 / PC2 上各种 lineage 完全糊在一起</b>，"
             "根本没有肉眼可见的 cluster 结构。<br><br>"
-            "换句话说，<b>「最大方差方向」并不是「最有信息的方向」</b>。"
-            "这是我后面所有方法的出发点。"
+            "经验上看：原始 ESM-2 空间里的<b>直接欧氏距离</b>并不能稳定地反映 lineage 关系；"
+            "PCA 抓到的是<b>方差最大</b>的方向，而方差最大的方向不一定就是承载 lineage 信号的方向。"
+            "这也是我后面所有方法的出发点。"
         ),
         "en": (
-            "Raw PCA on ESM-2 embeddings: lineages are visually entangled in PC1/PC2. "
-            "Maximum-variance directions are NOT the most informative directions."
+            "Plain PCA on raw ESM-2 embeddings: lineages are visually tangled in PC1/PC2. "
+            "Empirically, raw Euclidean distance in ESM-2 space does not stably reflect "
+            "lineage relationships, and the directions of maximum variance are not "
+            "necessarily the directions that carry lineage signal."
         ),
         "img": ("fig_raw_pca_messy.png", "Raw ESM-2 PCA 2D — no visible clusters"),
     },
@@ -332,58 +344,6 @@ SECTIONS: list[dict] = [
         ),
         "img": None,
     },
-    {
-        "n": 14,
-        "zh_title": "参考资料 / References & Data Sources",
-        "en_title": "References & data sources",
-        "zh": (
-            "<b>预训练模型</b><br>"
-            "&nbsp;&nbsp;• <b>ESM-2</b>: Lin et al., <i>Evolutionary-scale prediction of "
-            "atomic-level protein structure with a language model</i>, Science 379, 2023.<br>"
-            "&nbsp;&nbsp;• <b>ESM-1b</b>: Rives et al., <i>Biological structure and function "
-            "emerge from scaling unsupervised learning to 250M protein sequences</i>, "
-            "PNAS 118, 2021.<br>"
-            "&nbsp;&nbsp;• <b>EVO2</b>（提到过，未采用）: Nguyen et al., 2024.<br><br>"
-            "<b>方法与设计参考</b><br>"
-            "&nbsp;&nbsp;• <b>Numerical Taxonomy</b>: Deng et al., <i>Awareness of Evolutionary "
-            "Constraint Emerge from Numerical Taxonomy enabled by Bio-Language Model</i>, 2024. "
-            "(本工作 cascade decoder 的参考。)<br>"
-            "&nbsp;&nbsp;• <b>PASSION ESM pipeline</b>: virus project release, 2025. "
-            "(本工作四阶 ICTV 层级和训练数据的来源。)<br>"
-            "&nbsp;&nbsp;• <b>HDBSCAN</b>: McInnes & Healy, 2017.<br>"
-            "&nbsp;&nbsp;• <b>Integrated Gradients</b>: Sundararajan et al., ICML 2017.<br><br>"
-            "<b>数据来源（全部公开）</b><br>"
-            "&nbsp;&nbsp;• 跨物种分类：<b>ICTV VMR</b>（Virus Metadata Resource），"
-            "经 PASSION 流水线处理后的训练/验证/测试切分。<br>"
-            "&nbsp;&nbsp;• SARS-CoV-2 Spike 监测：<b>GISAID</b> + <b>GenBank</b>，"
-            "2020–2022，n=804，覆盖 Ancestral / Alpha / Beta / Delta / BA.1 / BA.2/5+。<br>"
-            "&nbsp;&nbsp;• 跨病毒验证：<b>RSV F</b> (n=410)、<b>Dengue Envelope domain III</b> (n=380)。<br>"
-            "&nbsp;&nbsp;• 结构验证：PDB <b>6VXX</b>（SARS-CoV-2 Spike）、<b>5WN9</b>（RSV F）、"
-            "<b>1OAN</b>（Dengue E）。<br><br>"
-            "<b>测试集中的高风险病毒（5% hand-curated 留出）</b><br>"
-            "&nbsp;&nbsp;<span style='color:#b94a48'>"
-            "⚠ 这部分请你<b>核对/补全具体的病毒列表</b>（我没在仓库里找到具体 manifest）。"
-            "推荐写成：例如 <i>Filoviridae</i> (Ebola, Marburg)、<i>Coronaviridae</i> "
-            "(SARS-CoV-1, MERS-CoV)、<i>Henipavirus</i> (Nipah) 等。"
-            "</span><br><br>"
-            "<b>本项目代码</b><br>"
-            "&nbsp;&nbsp;• 训练 + 分析: <a href='https://github.com/huan2701-cmd/esm-tax'>"
-            "huan2701-cmd/esm-tax</a><br>"
-            "&nbsp;&nbsp;• ICLR 报告 + 本 HTML: <a href='https://github.com/huan2701-cmd/esm-viral-evolution'>"
-            "huan2701-cmd/esm-viral-evolution</a><br><br>"
-            "<b>AI 协助声明</b>：代码骨架、可视化脚本、英文润色由 Claude (Anthropic) 协助；"
-            "实验设计、数据解释、科学结论均由作者本人完成。"
-        ),
-        "en": (
-            "Pretrained models: ESM-2 (Lin 2023), ESM-1b (Rives 2021), EVO2 (Nguyen 2024, "
-            "considered not used). Method references: Numerical Taxonomy (Deng 2024), "
-            "PASSION ESM pipeline (2025), HDBSCAN (McInnes 2017), Integrated Gradients "
-            "(Sundararajan 2017). Data: ICTV VMR (cross-species); GISAID+GenBank "
-            "SARS-CoV-2 Spike n=804; RSV F n=410; Dengue E III n=380; PDB 6VXX/5WN9/1OAN. "
-            "Code: huan2701-cmd/esm-tax and huan2701-cmd/esm-viral-evolution."
-        ),
-        "img": None,
-    },
 ]
 
 
@@ -412,10 +372,7 @@ h1 .en { display:block; font-size:16px; color:var(--en-color); font-weight:400;
 .section h2 .en { display:block; font-size:14px; color:var(--en-color);
                   font-weight:400; font-style:italic; padding-left:16px;
                   margin-top:2px; }
-.zh { margin:14px 0 6px; }
-.en-cap { font-size:14px; color:var(--en-color); font-style:italic;
-          border-left:3px solid #d0d7de; padding:6px 0 6px 12px;
-          margin:10px 0 6px; background:#f6f8fa; border-radius:0 4px 4px 0; }
+.body { margin:14px 0 6px; }
 .fig-cap { text-align:center; font-size:13px; color:var(--muted);
            margin:-4px 0 8px; font-style:italic; }
 footer { margin-top:48px; padding-top:20px; border-top:1px solid var(--border);
@@ -425,54 +382,73 @@ i { color:#5a6c7d; }
 """
 
 
-def section_html(s: dict) -> str:
-    parts = [f'<div class="section">']
-    parts.append(
-        f'<h2><span class="num">{s["n"]}</span>{s["zh_title"]}'
-        f'<span class="en">{s["en_title"]}</span></h2>'
-    )
-    parts.append(f'<div class="zh">{s["zh"]}</div>')
-    parts.append(f'<div class="en-cap">EN · {s["en"]}</div>')
+def section_html(s: dict, lang: str) -> str:
+    title = s["zh_title"] if lang == "zh" else s["en_title"]
+    body = s["zh"] if lang == "zh" else s["en"]
+    fig_label = "图" if lang == "zh" else "Figure"
+    parts = ['<div class="section">']
+    parts.append(f'<h2><span class="num">{s["n"]}</span>{title}</h2>')
+    parts.append(f'<div class="body">{body}</div>')
     if s.get("img"):
         name, alt = s["img"]
         parts.append(img(name, alt))
-        parts.append(f'<div class="fig-cap">Figure · {alt}</div>')
+        parts.append(f'<div class="fig-cap">{fig_label} · {alt}</div>')
     if s.get("img2"):
         name, alt = s["img2"]
         parts.append(img(name, alt))
-        parts.append(f'<div class="fig-cap">Figure · {alt}</div>')
+        parts.append(f'<div class="fig-cap">{fig_label} · {alt}</div>')
     parts.append("</div>")
     return "\n".join(parts)
 
 
-html = f"""<!DOCTYPE html>
-<html lang="zh-CN">
+HEADERS = {
+    "zh": {
+        "lang": "zh-CN",
+        "title": "ESM-2 病毒进化几何 · 给 TA 的故事版",
+        "h1": "ESM-2 病毒进化几何 · 给 TA 的故事版",
+        "meta": "作者 · James Huang &nbsp;|&nbsp; 完整 ICLR 报告："
+                "<code>paper/iclr2026/esm_viral_evolution.pdf</code>",
+        "footer": "按作者本人叙述顺序整理 · 配图均来自 ICLR 2026 报告原图",
+    },
+    "en": {
+        "lang": "en",
+        "title": "ESM-2 Viral Evolution — Story Version for the TA",
+        "h1": "Frozen Protein Language Models Encode Viral Evolutionary Geometry "
+               "— story-style walkthrough for the TA",
+        "meta": "Author · James Huang &nbsp;|&nbsp; Full ICLR report: "
+                "<code>paper/iclr2026/esm_viral_evolution.pdf</code>",
+        "footer": "Ordered by the author's first-person telling · "
+                   "figures sourced from the ICLR 2026 report",
+    },
+}
+
+
+def build(lang: str, out_path: Path) -> None:
+    h = HEADERS[lang]
+    body = "".join(section_html(s, lang) for s in SECTIONS)
+    html = f"""<!DOCTYPE html>
+<html lang="{h['lang']}">
 <head>
 <meta charset="UTF-8">
-<title>ESM-2 病毒进化几何 · 给 TA 的简单易懂版</title>
+<title>{h['title']}</title>
 <style>{CSS}</style>
 </head>
 <body>
 <div class="container">
 <header>
-  <h1>ESM-2 病毒进化几何 · 给 TA 的简单易懂版
-    <span class="en">Frozen Protein Language Models Encode Viral Evolutionary Geometry —
-    a story-style walkthrough for the TA</span>
-  </h1>
-  <div class="meta">作者 · James Huang &nbsp;|&nbsp;
-    完整 ICLR 报告：<code>paper/iclr2026/esm_viral_evolution.pdf</code></div>
+  <h1>{h['h1']}</h1>
+  <div class="meta">{h['meta']}</div>
 </header>
-
-{"".join(section_html(s) for s in SECTIONS)}
-
-<footer>
-  双语图文版 · 按作者本人叙述顺序整理 · 配图均来自 ICLR 2026 报告原图<br>
-  Bilingual narrative walkthrough · ordered by the author's own first-person telling
-</footer>
+{body}
+<footer>{h['footer']}</footer>
 </div>
 </body>
 </html>
 """
+    out_path.write_text(html, encoding="utf-8")
+    print(f"[OK] Saved {out_path}  ({len(html)/1024:.1f} KB)")
 
-OUT.write_text(html, encoding="utf-8")
-print(f"[OK] Saved {OUT}  ({len(html)/1024:.1f} KB)")
+
+if __name__ == "__main__":
+    build("zh", OUT_ZH)
+    build("en", OUT_EN)
