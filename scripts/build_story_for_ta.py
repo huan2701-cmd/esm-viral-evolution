@@ -221,19 +221,50 @@ SECTIONS: list[dict] = [
         "zh": (
             "于是我把无监督方法<b>挨个跑了一遍</b>：直接 K-means、HDBSCAN、"
             "autoencoder + GMM、kNN + Louvain、自学聚类的深度网络……<br><br>"
-            "<b>最后赢的是 SVD-HDBSCAN</b>：先截断 SVD 去掉那些「最大方差但没信息」"
-            "的 nuisance 维度（验证了第 6 节的猜测），再用 HDBSCAN 的密度聚类。"
-            "结果是 silhouette = 0.895，ARI = 0.992，没有用任何 lineage 标签。<br><br>"
-            "更有意思的是 —— <b>HDBSCAN 标为「噪声」的那 30% 点</b>，"
-            "里面 BA.2/5+ 占了 52%。这些不是失败，这些是<b>重组体信号</b>："
-            "del69-70 (Alpha) + L452R (Delta) + F486V (BA.4/5) 同时出现。"
-            "Pango 给的「BA.2/5+」其实把至少 3 个独立的重组历史揉成了一个标签。"
+            "<b>最后赢的是 SVD-HDBSCAN</b>：先截断 SVD 去掉那些「方差大但不携带 lineage 信号」"
+            "的 nuisance 维度（验证了第 6 节的经验观察），再用 HDBSCAN 的密度聚类。"
+            "结果 silhouette = 0.895，ARI = 0.992，没有用任何 lineage 标签。<br><br>"
+            "<b>最让我惊讶的是「噪声点」反而是信号</b> —— HDBSCAN 把 30% 的序列标为 noise，"
+            "但它们不是失败，是<b>真重组体 / 真新 VOC</b>。这套流程<b>事后回顾时</b>"
+            "正确地把以下几次已被公共卫生确认过的事件挑了出来：<br><br>"
+            "&nbsp;&nbsp;• <b>初始 Omicron 出现（2021 年底）</b>：在仅以 pre-Omicron 数据建 baseline 的情况下，"
+            "z-score = 3.21，被算法标为强偏离；<br>"
+            "&nbsp;&nbsp;• <b>XBB / BQ.1 重组浪潮（2022 年底）</b>：在以 BA.1 重新 baseline 的级联监测里，"
+            "z-score = 4.24，比初次检出 Omicron 还强 —— 而 XBB 后来正式被定为<b>真重组 lineage</b>；<br>"
+            "&nbsp;&nbsp;• <b>Alpha 在 NTD 上的 Δ69-70 / Δ144 缺失</b>：用 NTD-only pooling 把信号从 1.57 提到 2.72（+73%），"
+            "对应 Alpha 当年在 PCR S-gene target failure 上的早期信号；<br>"
+            "&nbsp;&nbsp;• <b>BA.2/5+ 重组体</b>：52% 被标 noise，profile 上同时携带 "
+            "<i>del69-70 (Alpha) + L452R (Delta) + F486V (BA.4/5)</i> 三重镶嵌 —— "
+            "Pango 用一个「BA.2/5+」标签把至少 3 个独立的重组历史揉到了一起，"
+            "算法没买账，自动把它们拆出来了。<br><br>"
+            "换句话说：<b>「失败聚类」不是 bug，是 feature</b> —— 算法对自己说不准的样本"
+            "诚实地标了 noise，而事后看这些 noise 恰好踩中了真正值得监测的事件。"
         ),
         "en": (
-            "Tried every unsupervised method on the menu. Winner: SVD-HDBSCAN "
-            "(silhouette 0.895, ARI 0.992, no lineage labels). "
-            "What looks like 30% 'noise' is actually recombinant signal — "
-            "BA.2/5+ alone has a 52% noise rate driven by mosaic mutation combinations."
+            "Tried every unsupervised method on the menu. Winner: <b>SVD-HDBSCAN</b> — "
+            "truncated SVD removes high-variance but lineage-uninformative directions "
+            "(confirming the empirical observation from §6), then HDBSCAN runs density "
+            "clustering on the compressed space. Silhouette 0.895, ARI 0.992, no lineage "
+            "labels used.<br><br>"
+            "<b>The most striking finding is that the 30% 'noise' points are themselves "
+            "signal.</b> In retrospective replay, the pipeline correctly flagged the "
+            "following events that public-health agencies later confirmed:<br><br>"
+            "&nbsp;&nbsp;• <b>Initial Omicron emergence (late 2021)</b>: baseline on "
+            "pre-Omicron data → z-score 3.21, flagged as a strong outlier.<br>"
+            "&nbsp;&nbsp;• <b>XBB / BQ.1 recombinant wave (late 2022)</b>: cascaded "
+            "baseline on BA.1 → z-score 4.24, stronger than the initial Omicron alarm. "
+            "XBB was later officially classified as a true recombinant lineage.<br>"
+            "&nbsp;&nbsp;• <b>Alpha NTD deletions Δ69-70 / Δ144</b>: NTD-only pooling "
+            "lifted the signal from 1.57 to 2.72 (+73%), matching the historical PCR "
+            "S-gene-target-failure signal of Alpha.<br>"
+            "&nbsp;&nbsp;• <b>BA.2/5+ recombinants</b>: 52% noise rate, mutation profiles "
+            "co-carrying <i>del69-70 (Alpha) + L452R (Delta) + F486V (BA.4/5)</i>. The "
+            "Pango 'BA.2/5+' label collapses at least three independent recombinant "
+            "histories into one bucket; the algorithm refused that collapse and split "
+            "them on its own.<br><br>"
+            "So <b>'failure to cluster' is a feature, not a bug</b> — the algorithm "
+            "honestly flags uncertain samples, and in hindsight those flags coincide "
+            "with the events that actually deserved monitoring."
         ),
         "img": ("fig_methodology_unsupervised.png",
                  "Unsupervised surveillance methodology"),
@@ -406,19 +437,16 @@ HEADERS = {
         "lang": "zh-CN",
         "title": "ESM-2 病毒进化几何 · 给 TA 的故事版",
         "h1": "ESM-2 病毒进化几何 · 给 TA 的故事版",
-        "meta": "作者 · James Huang &nbsp;|&nbsp; 完整 ICLR 报告："
-                "<code>paper/iclr2026/esm_viral_evolution.pdf</code>",
-        "footer": "按作者本人叙述顺序整理 · 配图均来自 ICLR 2026 报告原图",
+        "meta": "作者 · James Huang",
+        "footer": "按作者本人叙述顺序整理",
     },
     "en": {
         "lang": "en",
         "title": "ESM-2 Viral Evolution — Story Version for the TA",
         "h1": "Frozen Protein Language Models Encode Viral Evolutionary Geometry "
                "— story-style walkthrough for the TA",
-        "meta": "Author · James Huang &nbsp;|&nbsp; Full ICLR report: "
-                "<code>paper/iclr2026/esm_viral_evolution.pdf</code>",
-        "footer": "Ordered by the author's first-person telling · "
-                   "figures sourced from the ICLR 2026 report",
+        "meta": "Author · James Huang",
+        "footer": "Ordered by the author's first-person telling",
     },
 }
 
