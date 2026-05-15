@@ -28,24 +28,6 @@ def img(name: str, alt: str, width: str = "82%") -> str:
 # ─── Sections ────────────────────────────────────────────────────────────────
 SECTIONS: list[dict] = [
     {
-        "n": 0,
-        "zh_title": "一句话总结",
-        "en_title": "TL;DR",
-        "zh": (
-            "用<b>冻结的 ESM-2 蛋白语言模型</b>，不做任何训练就能同时支持"
-            "<b>跨物种病毒分类</b>（Kingdom→Order，90.6% 准确）和"
-            "<b>种内变异监测</b>（SARS-CoV-2 VOC 聚类，silhouette 0.895，没用任何标签）。"
-            "核心发现：进化几何已经在 ESM-2 的表征空间里了，不是微调出来的。"
-        ),
-        "en": (
-            "A frozen protein language model (ESM-2) simultaneously enables hierarchical "
-            "viral taxonomy (90.6% Order accuracy) AND unsupervised SARS-CoV-2 variant "
-            "surveillance (silhouette 0.895) — without any task-specific training. "
-            "Evolutionary geometry is intrinsic to the representation space."
-        ),
-        "img": None,
-    },
-    {
         "n": 1,
         "zh_title": "我去年踩过的坑：序列比对 + 随机森林",
         "en_title": "Last year's attempt: alignment + random forest",
@@ -313,6 +295,8 @@ SECTIONS: list[dict] = [
         ),
         "img": ("fig_methodology_unsupervised.png",
                  "Unsupervised surveillance methodology"),
+        "img2": ("fig_ncbi_verification.png",
+                  "NCBI Virus lookup of OY290850.1 → Pango XBB.1.16 — independent manual verification"),
     },
     {
         "n": 10,
