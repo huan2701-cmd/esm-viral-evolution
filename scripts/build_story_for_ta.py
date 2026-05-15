@@ -243,9 +243,9 @@ SECTIONS: list[dict] = [
             "我不强行解释<br><br>"
             "代表样例：<b>OY290850 = XBB.1.16（2023-06-06 采样）</b>，"
             "可以直接去 NCBI Virus 查证（搜 Accession 即可）。<br><br>"
-            "一句话总结这一段：<b>「failure to cluster」不是 bug，而是 feature</b> —— "
-            "算法对说不准的样本诚实地标 noise；在「Other / Recomb.」这种<b>本来就是杂烩</b>的子集里，"
-            "近一半的 noise 是真的重组株，且算法甚至能在错误标注里替人挖出漏掉的 XE。"
+            "<b>「failure to cluster」不是 bug，而是 feature</b>：算法对说不准的样本诚实地标 noise；"
+            "在「Other / Recomb.」这种<b>本来就是杂烩</b>的子集里，近一半的 noise 是真的重组株，"
+            "且算法甚至能在错误标注里替人挖出漏掉的 XE。"
         ),
         "en": (
             "Tried every unsupervised method on the menu. Winner: <b>SVD-HDBSCAN</b> — "
