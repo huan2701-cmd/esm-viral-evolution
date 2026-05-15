@@ -207,8 +207,11 @@ SECTIONS: list[dict] = [
             "的 nuisance 维度（验证了第 6 节的经验观察），再用 HDBSCAN 的密度聚类。"
             "结果 silhouette = 0.895，ARI = 0.992，没有用任何 lineage 标签。<br><br>"
             "<b>关键的事情发生在「噪声点」上。</b>算法把 329 条序列标为 noise（说「我不确定这是谁」）。"
-            "我把这 329 条全部交给 <b>Nextclade v3.21.2</b> 做 Pango lineage 分配做<b>独立验证</b>，"
-            "结果其中 <b>19 条被官方确认为重组株</b>（X 开头命名 = 真重组）：<br><br>"
+            "为了知道这些 noise 到底是垃圾还是金子，<b>我亲自一条一条把它们打到 NCBI Virus 数据库里手动核对</b>，"
+            "同时用 <b>Nextclade v3.21.2</b> 对每条做 Pango lineage 分配 —— "
+            "这是<b>第三方独立工具 + 人工逐条手查</b>双重验证，不是模型自报。<br><br>"
+            "结果其中 <b>19 条被官方确认为重组株</b>（X 开头命名 = 真重组）："
+            "下面那张 NCBI Virus 截图就是 19 条之一 OY290850.1 → XBB.1.16 的手查留痕。<br><br>"
             "<table style='border-collapse:collapse;margin:8px 0;font-size:13px;'>"
             "<tr style='background:#f0f4f8;'>"
             "<th style='border:1px solid #d0d7de;padding:4px 10px;'>类别</th>"
@@ -251,10 +254,15 @@ SECTIONS: list[dict] = [
             "clustering on the compressed space. Silhouette 0.895, ARI 0.992, no lineage "
             "labels used.<br><br>"
             "<b>The interesting thing happens on the 'noise' points.</b> The algorithm "
-            "flagged 329 sequences as noise (\"I'm not sure where this belongs\"). I sent "
-            "all 329 to <b>Nextclade v3.21.2</b> for independent Pango lineage assignment. "
+            "flagged 329 sequences as noise (\"I'm not sure where this belongs\"). To find "
+            "out whether these were garbage or gold, <b>I manually looked up every single "
+            "noise sequence in the NCBI Virus database, one accession at a time</b>, while "
+            "in parallel running <b>Nextclade v3.21.2</b> for Pango lineage assignment on "
+            "each — third-party tool plus first-person manual cross-check, not a model "
+            "self-report.<br><br>"
             "Among them, <b>19 were officially confirmed as recombinants</b> (the 'X-' "
-            "Pango prefix = true recombinant):<br><br>"
+            "Pango prefix = true recombinant). The NCBI Virus screenshot below shows one "
+            "of these manual look-ups: OY290850.1 → XBB.1.16.<br><br>"
             "<table style='border-collapse:collapse;margin:8px 0;font-size:13px;'>"
             "<tr style='background:#f0f4f8;'>"
             "<th style='border:1px solid #d0d7de;padding:4px 10px;'>Group</th>"
@@ -379,30 +387,6 @@ SECTIONS: list[dict] = [
             "designed to stress generalization. Order accuracy 90.6% / Top-5 98.9%."
         ),
         "img": ("fig_tsne_ranks.png", "Per-rank t-SNE of decoder features"),
-    },
-    {
-        "n": 13,
-        "zh_title": "整个故事一句话",
-        "en_title": "The story in one sentence",
-        "zh": (
-            "<b>「同一个冻结的蛋白语言模型，"
-            "既能粗粒度认出新病毒落在哪个科目，"
-            "也能细粒度看出哪条 SARS-CoV-2 序列是重组体 —— "
-            "全程不需要为任何任务专门训练 backbone。」</b><br><br>"
-            "我不会说这套流程能「救命」（这是临床问题，不是表征学习问题），"
-            "但它能<b>缩短「拿到序列 → 拿到可解读信息」的回路</b>："
-            "对一段新序列，能在几分钟里给出（1）最像哪一个已知病毒科属、"
-            "（2）哪些位点与已知 VOC 共享、（3）密度聚类是否标它为噪声"
-            "（提示可能的重组体）。<br><br>"
-            "这三件事过去都依赖人工 MSA + 专家审阅，可以是几天到几周的回路。"
-        ),
-        "en": (
-            "One frozen PLM gives both coarse taxonomy and fine recombinant detection "
-            "without any task-specific training. I am not claiming clinical impact — "
-            "but the framework shortens the loop from 'received sequence' to "
-            "'interpretable evolutionary placement' from days to minutes."
-        ),
-        "img": None,
     },
 ]
 
